@@ -9,5 +9,5 @@ def root():
 
 
 @app.get("/command/{name}")
-def get_command(name: str, q: str | None = None):
-    return {"name": name, "q": "gotcha, trying to query huh.."}
+def get_command(name: str):
+    return {"command": f"You searched for '{name}'"}
