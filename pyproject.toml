@@ -10,10 +10,8 @@ requires-python = "==3.12.*"
 readme = "README.md"
 license = {text = "MIT"}
 
-
 [tool.pdm]
 distribution = false
 
 [tool.pdm.scripts]
 start = "gunicorn src.main:app -k uvicorn.workers.UvicornWorker -w 4 -b 0.0.0.0:8000"
-build = "bash ./build.sh"
