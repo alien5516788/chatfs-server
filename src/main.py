@@ -1,3 +1,5 @@
+from time import sleep
+
 from fastapi import FastAPI
 
 app = FastAPI()
@@ -10,4 +12,5 @@ def root():
 
 @app.get("/command/{name}")
 def get_command(name: str):
-    return {"command": f"You searched for '{name}'"}
+    sleep(6)
+    return {"command": f"You waited for '{name}'"}
