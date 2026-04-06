@@ -1,23 +1,25 @@
+import asyncio
+
 from fastapi import APIRouter, WebSocket
 
-from clientmanager.clientmanager import ClientManager
+from src.clientmanager import clientManager
 
 router = APIRouter(prefix="/client")
-clientManager = ClientManager()
-
 
 
 @router.websocket("/")
 async def connect_client(websocket: WebSocket):
+    # Save connection
     client = await clientManager.add_client(websocket)
-    await client.send_acknowledge()
+    await client.send_connect_ack()
 
-    # Keep socket alive
+    # Client must send heartbeats every 20 seconds
+    # If no heartbeat recieved, timeout happens within next 10 seconds
+    #   and connection get closed and cleaned automatically
     try:
         while True:
-            message = await websocket.receive_text()
+            message = await asyncio.wait_for(websocket.receive_text(), timeout=30)
             client.receive_reply(message)
 
     except Exception:
-        print("Log: Client connection unsuccessful")
-        pass
+        await clientManager.remove_client(client.clientId)

@@ -1,23 +1,21 @@
 import json
 import os
-from datetime import datetime
 from typing import Literal
 
 from fastapi import WebSocket
 
 
-# New clients should not be created manually
-# Instead create them through the client manager
+# New clients should not be created or removed manually
+# Instead create or remove them through the client manager
 class Client:
-    _MessageType = Literal["connect_ack", "get_context", "general"]
-    _replyType = ["heart_beat", "code_context"]
+    _MessageType = Literal["connect_ack", "get_context"]
+    _replyType = ["code_context"]
 
-    __slots__ = ("_socket", "clientId", "alive")  # optimizes memory for methods
+    __slots__ = ("_socket", "clientId")  # optimizes memory for methods
 
     def __init__(self, socket: WebSocket, clientId: str):
         self._socket: WebSocket = socket
         self.clientId: str = clientId
-        self.alive: datetime = datetime.now()
 
     # Client is initialized through a class method
     # Becuase the initializing process is async
@@ -43,20 +41,33 @@ class Client:
         await self._socket.send_text(json.dumps(msg))
 
     # This should only be sent immediately after the initial connection
-    async def send_acknowledge(self):
+    async def send_connect_ack(self):
         await self._send_message(
             True,
             "connect_ack",
             {
-                "client_id": self.clientId,
-                "server_url": os.getenv("SERVER_URL"),
+                "server_url": f"{os.getenv('SERVER_URL') or 'https://notfound'}/{self.clientId}/",
             },
+        )
+
+    # Invoked by LLM endpoints
+    async def send_get_context(self, command: str, queries: list[str]):
+        await self._send_message(
+            True,
+            "get_context",
+            {"command": command, "queries": queries},
         )
 
     # All recived messages should be passed to this method for validation
     # Each message is then passed to individual handler methods for further processing
     # Handler methods are private and should not be used directly
     def receive_reply(self, reply: str):
+        # Pong just resets the timeoutand is only the message that is not json
+        # Pong is sent as a response to a socket internel ping
+        if reply == "pong":
+            return
+
+        # Handle other messages
         try:
             rply = json.loads(reply)
 
@@ -86,21 +97,15 @@ class Client:
             # Pass to handlers
             reply_type = rply.get("reply_type")
 
-            if reply_type == "heart_beat":
-                self._recieve_heart_beat()
-
             if reply_type == "code_context":
                 self._recieve_code_context(rply)
+                return
 
         except Exception:
             print("Log: Reply format is not valid")
             return
 
-    # Update socket alive
-    def _recieve_heart_beat(self):
-        self.alive = datetime.now()
-
     # Update shared code context
     def _recieve_code_context(self, reply: dict):
         # TODO: implement this after completing LLM api endpoints
-        pass
+        return

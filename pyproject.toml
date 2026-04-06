@@ -14,4 +14,4 @@ license = {text = "MIT"}
 distribution = false
 
 [tool.pdm.scripts]
-start = "gunicorn src.main:app -k uvicorn.workers.UvicornWorker -w 4 -b 0.0.0.0:8000"
+start = "gunicorn src.main:app -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000"

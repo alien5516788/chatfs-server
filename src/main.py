@@ -1,35 +1,29 @@
-import asyncio
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
-from src.api.client import clientManager
 from src.api.client import router as client_router
+from src.api.llm import router as llm_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Startup tasks
     load_dotenv()
 
-    task = asyncio.create_task(clientManager.clean_clients())
-    # TODO: I don't quite understand whats going here, check this later
-    try:
-        yield
+    print("Log: Server started")
 
-    finally:
-        print("Log: Server shutdown")
-        task.cancel()
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass
+    yield
+
+    # Shutdown tasks
+    print("Log: Server shutdown")
 
 
 app = FastAPI(lifespan=lifespan)
 
-
 app.include_router(client_router)
+app.include_router(llm_router)
 
 
 @app.get("/")
