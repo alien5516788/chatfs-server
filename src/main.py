@@ -1,55 +1,37 @@
-from time import sleep
+import asyncio
+from contextlib import asynccontextmanager
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 
-app = FastAPI()
+from src.api.client import clientManager
+from src.api.client import router as client_router
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    load_dotenv()
+
+    task = asyncio.create_task(clientManager.clean_clients())
+    # TODO: I don't quite understand whats going here, check this later
+    try:
+        yield
+
+    finally:
+        print("Log: Server shutdown")
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+app.include_router(client_router)
 
 
 @app.get("/")
-def root():
-    return {"message": "Hello from sync server"}
-
-
-@app.get("/command/{name}")
-def get_command(name: str):
-    sleep(6)
-    return {"command": f"You waited for '{name}'"}
-
-
-@app.get("/code")
-def get_code():
-    return """
-use notify::{Event, RecursiveMode, Result, Watcher};
-use std::{path::Path, sync::mpsc};
-
-fn main() -> Result<()> {
-
-    let s = "ssgdg";
-    let l = String::from("wehr aoweh ");
-
-    println!("'{} {}'", s.starts_with("ss"), l.trim_start_matches("wet"));
-
-    // Make a channel to receive filesystem events
-    let (tx, rx) = mpsc::channel::<notify::Result<Event>>();
-
-    // Create a watcher using the recommended backend for the platform
-    let mut watcher = notify::recommended_watcher(tx)?;
-
-    // Add a path to watch (replace "." with the directory you want)
-    watcher.watch(Path::new("./src"), RecursiveMode::Recursive)?;
-
-    println!("Watching for changes…");
-
-    // Loop forever, printing events
-    for res in rx {
-        match res {
-            Ok(event) => println!("Event: {:?}", event),
-            Err(e) => println!("Watch error: {:?}", e),
-        }
-    }
-
-    // Note: you usually never reach here
-    // because the loop above runs forever
-    Ok(())
-}
-    """
+def hello():
+    return "Hello from sync server"
