@@ -19,7 +19,7 @@ async def connect_client(websocket: WebSocket):
     try:
         while True:
             message = await asyncio.wait_for(websocket.receive_text(), timeout=30)
-            client.receive_reply(message)
+            await client.receive_reply(message)
 
     except Exception:
         await clientManager.remove_client(client.clientId)

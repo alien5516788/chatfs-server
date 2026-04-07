@@ -1,18 +1,18 @@
 import json
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from src.api.llm_ops.list import router as list_router
 from src.clientmanager import clientManager
 
 router = APIRouter(prefix="/{clientId}")
 
+router.include_router(list_router)
+
 
 @router.get("/")
-async def hello(clientId: str):
-    client = await clientManager.get_client(clientId)
+async def hello(client=Depends(clientManager.get_client)):
+    if not client:
+        return json.dumps({"status": False, "message": "Invalid client ID"})
 
-    if client:
-        return json.dumps({"status": True, "message": "Client exists"})
-
-    else:
-        return json.dumps({"status": False, "message": "Client does not exists"})
+    return json.dumps({"status": True, "message": f"Client '{client.clientId}' found"})

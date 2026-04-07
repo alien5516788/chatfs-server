@@ -1,8 +1,3 @@
-# Get authenticated
-# per session
-"/authenticate?key=a3yr2ryr0rerygw98ryu0.." # uuid
-
-
 # List directory
 "/list?path=&recursive=false&itemtype=all"  # list all in root
 
@@ -60,22 +55,22 @@
 # Copy content of a file
 
 # line 2 of the dash.tsx is pasted to line 4 of dashboard.tsx shifting existing lines down
-"/copycontent?src=src/pages/{dash.tsx}&dest=src/pages/{dashboard.tsx}&lines=2-2&toline=4"
+"/copycontent?src=src/pages/dash.tsx&dest=src/pages/dashboard.tsx&lines=2-2&toline=4"
 # all lines of the dash.tsx will be appended to dashboard.tsx
-"/copycontent?src=src/pages/{dash.tsx}&dest=src/pages/{dashboard.tsx}&lines=1-*&toline=*"
+"/copycontent?src=src/pages/dash.tsx&dest=src/pages/dashboard.tsx&lines=1-*&toline=*"
 # line 2 to 10 of the dash.tsx is pasted to line 6 of dashboard.tsx shifting existing content down
-"/copycontent?src=src/pages/{dash.tsx}&dest=src/pages/{dashboard.tsx}&lines=2-10&toline=6"
+"/copycontent?src=src/pages/dash.tsx&dest=src/pages/dashboard.tsx&lines=2-10&toline=6"
 # all lines from line 2 of the dash.tsx is pasted to line 6 of dashboard.tsx shifting existing content down
-"/copycontent?src=src/pages/{dash.tsx}&dest=src/pages/{dashboard.tsx}&lines=2-*&toline=6"
+"/copycontent?src=src/pages/dash.tsx&dest=src/pages/dashboard.tsx&lines=2-*&toline=6"
 # all lines upto line 10 of the dash.tsx is pasted to line 6 of dashboard.tsx shifting existing content down
-"/copycontent?src=src/pages/{dash.tsx}&dest=src/pages/{dashboard.tsx}&lines=*-10&toline=6"
+"/copycontent?src=src/pages/dash.tsx&dest=src/pages/dashboard.tsx&lines=*-10&toline=6"
 
 # Move content of a file
 # Same as copy structure, except the command is 'movecontent' instead of 'copycontent'
 
 # Delete content of a file
-"/deletecontent?path=src/pages/{dash.tsx}&lines=1-*"
-"/deletecontent?path=src/pages/{dash.tsx}&lines=2-2"
-"/deletecontent?path=src/pages/{dash.tsx}&lines=4-*"
-"/deletecontent?path=src/pages/{dash.tsx}&lines=4-23"
-"/deletecontent?path=src/pages/{dash.tsx}&lines=*-23"
+"/deletecontent?path=src/pages/dash.tsx&lines=1-*"
+"/deletecontent?path=src/pages/dash.tsx&lines=2-2"
+"/deletecontent?path=src/pages/dash.tsx&lines=4-*"
+"/deletecontent?path=src/pages/dash.tsx&lines=4-23"
+"/deletecontent?path=src/pages/dash.tsx&lines=*-23"

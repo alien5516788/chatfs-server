@@ -7,7 +7,7 @@ from .client import Client
 
 
 # Only one client manager instance should exists
-class Manager:
+class ClientManager:
     def __init__(self):
         self._connectedClients: dict[str, Client] = {}
         self._clientListLock = asyncio.Lock()
