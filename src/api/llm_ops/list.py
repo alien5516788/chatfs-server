@@ -1,6 +1,4 @@
-from typing import Literal
-
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from src.clientmanager import clientManager
 from src.clientmanager.client import Client
@@ -12,7 +10,7 @@ router = APIRouter(prefix="/list")
 async def list(
     path: str = "",
     recursive: str = "false",
-    itemtype: str = "all",
+    itemtype: str = "file",
     client: Client = Depends(clientManager.get_client),
 ):
     if not client:
@@ -30,11 +28,11 @@ async def list(
             "message": "itemtype: Item type must be 'folder', 'file' or 'all'",
         }
 
-    return await client.send_get_context(
+    return await client.send_query_codebase(
         "list",
         {
             "path": path,
             "recursive": True if recursive == "true" else False,
-            "itemtype": itemtype,
+            "item_type": itemtype,
         },
     )

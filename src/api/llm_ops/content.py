@@ -1,5 +1,5 @@
 import regex as re
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends
 
 from src.clientmanager import clientManager
 from src.clientmanager.client import Client
@@ -28,4 +28,4 @@ async def content(
             "message": "lines: Lines must follow the pattern '^(\\d+|\\*)-(\\d+|\\*)$' (e.g. 'lines=1-*', 'lines=3-6', 'lines=*-4')",
         }
 
-    return await client.send_get_context("content", {"path": path, "lines": lines})
+    return await client.send_query_codebase("content", {"path": path, "lines": lines})

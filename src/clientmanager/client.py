@@ -5,7 +5,7 @@ from typing import Literal
 
 from fastapi import WebSocket
 
-MessageType = Literal["connect_ack", "get_context"]
+MessageType = Literal["connect_ack", "query_codebase"]
 replyTypes = {"code_context"}
 
 
@@ -45,20 +45,20 @@ class Client:
         await self._socket.send_text(json.dumps(message))
 
     # Invoked by LLM endpoints
-    # After sending a get context message, the handler should wait until the context is recieved
+    # After sending a get codebase message, the handler should wait until the code context is recieved
     # Message get timedout if not recieved withing 2 seconds
     async def __wait_for_context(self):
         while not self._sharedContext:
             await asyncio.sleep(0.01)
 
-    async def send_get_context(
+    async def send_query_codebase(
         self, command: str, queries: dict[str, int | float | str | bool]
     ) -> dict:
         # Clean old shared contexts
         self._sharedContext = None
 
-        # Request for context
-        message_type: MessageType = "get_context"
+        # Query codebase
+        message_type: MessageType = "query_codebase"
         message = {
             "status": True,
             "message_type": message_type,
@@ -77,9 +77,9 @@ class Client:
                 "message": "Context wasn't sent by the client or timeout occured",
             }
 
-        return {
-            "status": True,
-            "context": self._sharedContext,
+        return self._sharedContext or {
+            "status": False,
+            "message": "Empty context",
         }
 
     # All recived messages should be passed to this method for validation
