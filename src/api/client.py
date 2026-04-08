@@ -11,6 +11,8 @@ router = APIRouter(prefix="/client")
 async def connect_client(websocket: WebSocket):
     # Save connection
     client = await clientManager.add_client(websocket)
+
+    # Send connect acknowledgement
     await client.send_connect_ack()
 
     # Client must send heartbeats every 20 seconds
