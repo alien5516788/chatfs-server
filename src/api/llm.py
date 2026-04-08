@@ -6,8 +6,8 @@ from src.api.llm_ops.manipulations import (
     copyRouter,
     createRouter,
     deleteRouter,
-    insertlineRouter,
     moveRouter,
+    writelineRouter,
 )
 from src.api.llm_ops.write import router as writeRouter
 from src.clientmanager import clientManager
@@ -20,7 +20,7 @@ router.include_router(createRouter)
 router.include_router(copyRouter)
 router.include_router(moveRouter)
 router.include_router(deleteRouter)
-router.include_router(insertlineRouter)
+router.include_router(writelineRouter)
 router.include_router(writeRouter)
 
 

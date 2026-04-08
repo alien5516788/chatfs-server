@@ -10,7 +10,7 @@ router = APIRouter(prefix="/list")
 async def list(
     path: str = "",
     recursive: str = "false",
-    itemtype: str = "file",
+    item_type: str = "all",
     client: Client = Depends(clientManager.get_client),
 ):
     if not client:
@@ -22,10 +22,10 @@ async def list(
             "message": "recursive: Recursion must be 'true' or 'false' (not any boolean)",
         }
 
-    if itemtype not in {"folder", "file", "all"}:
+    if item_type not in {"folder", "file", "all"}:
         return {
             "status": False,
-            "message": "itemtype: Item type must be 'folder', 'file' or 'all'",
+            "message": "item_type: Item type must be 'folder', 'file' or 'all'",
         }
 
     return await client.send_query_codebase(
@@ -33,6 +33,6 @@ async def list(
         {
             "path": path,
             "recursive": True if recursive == "true" else False,
-            "item_type": itemtype,
+            "item_type": item_type,
         },
     )

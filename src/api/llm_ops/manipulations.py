@@ -1,3 +1,5 @@
+from typing import Literal
+
 import regex as re
 from fastapi import APIRouter, Depends
 
@@ -8,13 +10,13 @@ createRouter = APIRouter(prefix="/create")
 copyRouter = APIRouter(prefix="/copy")
 moveRouter = APIRouter(prefix="/move")
 deleteRouter = APIRouter(prefix="/delete")
-insertlineRouter = APIRouter(prefix="/insertline")
+writelineRouter = APIRouter(prefix="/insertline")
 
 
 @createRouter.get("/")
 async def create(
     path: str = "",
-    itemtype: str = "",
+    item_type: str = "",
     client: Client = Depends(clientManager.get_client),
 ):
     if not client:
@@ -26,49 +28,40 @@ async def create(
             "message": "path: Folder or file name cannot be empty (e.g. 'path=src/ui', 'path=src/file.txt')",
         }
 
-    if itemtype not in {"folder", "file"}:
+    if item_type not in {"folder", "file"}:
         return {
             "status": False,
-            "message": "itemtype: Item type must be 'folder' or 'file'",
+            "message": "item_type: Item type must be 'folder' or 'file'",
         }
 
     return await client.send_query_codebase(
-        "create", {"path": path, "item_type": itemtype}
+        "create", {"path": path, "item_type": item_type}
     )
 
 
 @copyRouter.get("/")
 async def copy(
     path: str = "",
-    destpath: str = "",
+    dest_path: str = "",
     client: Client = Depends(clientManager.get_client),
 ):
-    if not client:
-        return {"status": False, "message": "Invalid or expired client Id"}
-
-    if len(path) <= 0:
-        return {
-            "status": False,
-            "message": "path: Path cannot be empty (e.g. 'path=src/ui', 'path=src/file.txt')",
-        }
-
-    if len(destpath) <= 0:
-        return {
-            "status": False,
-            "message": "destpath: Destination path cannot be empty (e.g. 'path=src/components', 'path=src/test.py')",
-        }
-
-    return await client.send_query_codebase(
-        "copy", {"path": path, "dest_path": destpath}
-    )
+    return await _copy_or_move("copy", path, dest_path, client)
 
 
-# Exact same structure of copy
 @moveRouter.get("/")
 async def move(
     path: str = "",
-    destpath: str = "",
+    dest_path: str = "",
     client: Client = Depends(clientManager.get_client),
+):
+    return await _copy_or_move("move", path, dest_path, client)
+
+
+async def _copy_or_move(
+    cmd: Literal["copy", "move"],
+    path: str,
+    dest_path: str,
+    client: Client,
 ):
     if not client:
         return {"status": False, "message": "Invalid or expired client Id"}
@@ -79,15 +72,13 @@ async def move(
             "message": "path: Path cannot be empty (e.g. 'path=src/ui', 'path=src/file.txt')",
         }
 
-    if len(destpath) <= 0:
+    if len(dest_path) <= 0:
         return {
             "status": False,
-            "message": "destpath: Destination path cannot be empty (e.g. 'path=src/components', 'path=src/test.py')",
+            "message": "dest_path: Destination path cannot be empty (e.g. 'path=src/components', 'path=src/test.py')",
         }
 
-    return await client.send_query_codebase(
-        "move", {"path": path, "dest_path": destpath}
-    )
+    return await client.send_query_codebase(cmd, {"path": path, "dest_path": dest_path})
 
 
 @deleteRouter.get("/")
@@ -107,8 +98,8 @@ async def delete(
     return await client.send_query_codebase("delete", {"path": path})
 
 
-@insertlineRouter.get("/")
-async def insertline(
+@writelineRouter.get("/")
+async def writeline(
     path: str = "",
     lines: str = "",
     mode: str = "shift",
@@ -140,5 +131,5 @@ async def insertline(
         }
 
     return await client.send_query_codebase(
-        "insertline", {"path": path, "lines": lines, "mode": mode, "content": content}
+        "writeline", {"path": path, "lines": lines, "mode": mode, "content": content}
     )
