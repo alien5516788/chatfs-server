@@ -73,10 +73,10 @@
     <h3> Write content to a file </h3>
 
     # Single line write
-    /delete?path=src/components/dash.tsx
+    /writeline?path=src/components/dash.tsx&line=11&mode=shift&content=print%28%22Hello%2C%20world%21%22%29
 
-    path: /insertline?path=src/components/dash.tsx
-    lines: lines: start-end (* for all lines)
+    path: valid file or folder path (empty for root)
+    line: start-end (* for all lines)
     mode: shift, replace
     content: readable characters
 
@@ -93,6 +93,7 @@
     - For list opeartions ignore rules may exclude certain files or folders
     - For content reading binary or unreadable files return a readable error message
     - Move, copy opeartions are identical to command line cp, mv
+    - For single line writes
     </pre>
 
     <h2>Response format</h2>

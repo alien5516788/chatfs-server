@@ -37,5 +37,5 @@ class ClientManager:
             self._connectedClients.pop(clientId, None)
 
         print(
-            f"Log: Client removed (clientId: {clientId}), total: {len(self._connectedClients)}"
+            f"Log: Client removed (clientId: {clientId}), total: {len(self._connectedClients)})"
         )

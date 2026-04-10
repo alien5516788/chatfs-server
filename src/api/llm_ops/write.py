@@ -42,5 +42,5 @@ async def write(
         }
 
     return await client.send_query_codebase(
-        "insertline", {"path": path, "lines": lines, "mode": mode, "content": content}
+        "write", {"path": path, "lines": lines, "mode": mode, "content": content}
     )

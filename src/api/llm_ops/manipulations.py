@@ -10,7 +10,7 @@ createRouter = APIRouter(prefix="/create")
 copyRouter = APIRouter(prefix="/copy")
 moveRouter = APIRouter(prefix="/move")
 deleteRouter = APIRouter(prefix="/delete")
-writelineRouter = APIRouter(prefix="/insertline")
+writelineRouter = APIRouter(prefix="/writeline")
 
 
 @createRouter.get("/")
@@ -98,11 +98,12 @@ async def delete(
     return await client.send_query_codebase("delete", {"path": path})
 
 
+# Write line command is sent to client as write command
 @writelineRouter.get("/")
 async def writeline(
     path: str = "",
-    lines: str = "",
-    mode: str = "shift",
+    line: str = "",
+    mode: str = "",
     content: str = "",
     client: Client = Depends(clientManager.get_client),
 ):
@@ -115,10 +116,10 @@ async def writeline(
             "message": "path: File name cannot be empty (e.g. 'path=src/file.txt')",
         }
 
-    if not re.match(r"^(\d+|\*)-(\d+|\*)$", lines):
+    if not re.match(r"^(\d+|\*)$", line):
         return {
             "status": False,
-            "message": "lines: Lines must follow the pattern '^(\\d+|\\*)-(\\d+|\\*)$' (e.g. 'lines=1-*', 'lines=3-6', 'lines=*-4')",
+            "message": "line: Line must be a number (e.g. 'line=3', 'line=*')",
         }
 
     if mode not in {"shift", "replace"}:
@@ -130,6 +131,13 @@ async def writeline(
             "message": "content: Line length cannot exceed 200 characters",
         }
 
+    if "\n" in content:
+        return {
+            "status": False,
+            "message": "content: Content must be a single line (no newline characters are allowed)",
+        }
+
     return await client.send_query_codebase(
-        "writeline", {"path": path, "lines": lines, "mode": mode, "content": content}
+        "write",
+        {"path": path, "lines": f"{line}-{line}", "mode": mode, "content": content},
     )
