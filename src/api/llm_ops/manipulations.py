@@ -20,18 +20,18 @@ async def create(
     client: Client = Depends(clientManager.get_client),
 ):
     if not client:
-        return {"status": False, "message": "Invalid or expired client Id"}
+        return {"status": False, "error": "Invalid or expired client Id"}
 
     if len(path) <= 0:
         return {
             "status": False,
-            "message": "path: Folder or file name cannot be empty (e.g. 'path=src/ui', 'path=src/file.txt')",
+            "error": "path: Path cannot be empty (e.g. 'path=src/ui', 'path=src/file.txt')",
         }
 
     if item_type not in {"folder", "file"}:
         return {
             "status": False,
-            "message": "item_type: Item type must be 'folder' or 'file'",
+            "error": "item_type: Item type must be 'folder' or 'file'",
         }
 
     return await client.send_query_codebase(
@@ -64,18 +64,18 @@ async def _copy_or_move(
     client: Client,
 ):
     if not client:
-        return {"status": False, "message": "Invalid or expired client Id"}
+        return {"status": False, "error": "Invalid or expired client Id"}
 
     if len(path) <= 0:
         return {
             "status": False,
-            "message": "path: Path cannot be empty (e.g. 'path=src/ui', 'path=src/file.txt')",
+            "error": "path: Path cannot be empty (e.g. 'path=src/ui', 'path=src/file.txt')",
         }
 
     if len(dest_path) <= 0:
         return {
             "status": False,
-            "message": "dest_path: Destination path cannot be empty (e.g. 'path=src/components', 'path=src/test.py')",
+            "error": "dest_path: Destination path cannot be empty (e.g. 'path=src/components', 'path=src/test.py')",
         }
 
     return await client.send_query_codebase(cmd, {"path": path, "dest_path": dest_path})
@@ -87,12 +87,12 @@ async def delete(
     client: Client = Depends(clientManager.get_client),
 ):
     if not client:
-        return {"status": False, "message": "Invalid or expired client Id"}
+        return {"status": False, "error": "Invalid or expired client Id"}
 
     if len(path) <= 0:
         return {
             "status": False,
-            "message": "path: Path cannot be empty (e.g. 'path=src/ui', 'path=src/file.txt')",
+            "error": "path: Path cannot be empty (e.g. 'path=src/ui', 'path=src/file.txt')",
         }
 
     return await client.send_query_codebase("delete", {"path": path})
@@ -108,33 +108,33 @@ async def writeline(
     client: Client = Depends(clientManager.get_client),
 ):
     if not client:
-        return {"status": False, "message": "Invalid or expired client Id"}
+        return {"status": False, "error": "Invalid or expired client Id"}
 
     if len(path) <= 0:
         return {
             "status": False,
-            "message": "path: File name cannot be empty (e.g. 'path=src/file.txt')",
+            "error": "path: File name cannot be empty (e.g. 'path=src/file.txt')",
         }
 
     if not re.match(r"^(\d+|\*)$", line):
         return {
             "status": False,
-            "message": "line: Line must be a number (e.g. 'line=3', 'line=*')",
+            "error": "line: Line must be a number or '*' (e.g. 'line=3', 'line=*')",
         }
 
     if mode not in {"shift", "replace"}:
-        return {"status": False, "message": "mode: Mode must be 'shift' or 'replace'"}
+        return {"status": False, "error": "mode: Mode must be 'shift' or 'replace'"}
 
     if len(content) >= 200:
         return {
             "status": False,
-            "message": "content: Line length cannot exceed 200 characters",
+            "error": "content: Line length cannot exceed 200 characters",
         }
 
     if "\n" in content:
         return {
             "status": False,
-            "message": "content: Content must be a single line (no newline characters are allowed)",
+            "error": "content: Content must be a single line (no newline characters are allowed)",
         }
 
     return await client.send_query_codebase(

@@ -14,18 +14,20 @@ async def content(
     client: Client = Depends(clientManager.get_client),
 ):
     if not client:
-        return {"status": False, "message": "Invalid or expired client Id"}
+        return {"status": False, "error": "Invalid or expired client Id"}
 
     if len(path) <= 0:
         return {
             "status": False,
-            "message": "path: File name cannot be empty (e.g. 'path=file.config.json', 'path=src/file.txt')",
+            "error": "path: Path must be a file and cannot be empty (e.g. 'path=file.config.json', 'path=src/file.txt')",
         }
 
     if not re.match(r"^(\d+|\*)-(\d+|\*)$", lines):
         return {
             "status": False,
-            "message": "lines: Lines must follow the pattern '^(\\d+|\\*)-(\\d+|\\*)$' (e.g. 'lines=1-*', 'lines=3-6', 'lines=*-4')",
+            "error": "lines: Lines must follow the pattern 'start-end' (e.g. lines=2-2, 'lines=1-*', 'lines=3-6', 'lines=*-4', lines=*-*)",
         }
 
-    return await client.send_query_codebase("content", {"path": path, "lines": lines})
+    return await client.send_query_codebase(
+        "content", {"path": path, "lines": "1-*" if lines == "*-*" else lines}
+    )

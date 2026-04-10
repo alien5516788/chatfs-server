@@ -14,18 +14,18 @@ async def list(
     client: Client = Depends(clientManager.get_client),
 ):
     if not client:
-        return {"status": False, "message": "Invalid or expired client Id"}
+        return {"status": False, "error": "Invalid or expired client Id"}
 
     if recursive not in {"true", "false"}:
         return {
             "status": False,
-            "message": "recursive: Recursion must be 'true' or 'false' (not any boolean)",
+            "error": "recursive: Recursion must be 'true' or 'false' (not any boolean)",
         }
 
     if item_type not in {"folder", "file", "all"}:
         return {
             "status": False,
-            "message": "item_type: Item type must be 'folder', 'file' or 'all'",
+            "error": "item_type: Item type must be 'folder', 'file' or 'all'",
         }
 
     return await client.send_query_codebase(

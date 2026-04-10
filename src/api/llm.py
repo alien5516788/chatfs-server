@@ -11,6 +11,7 @@ from src.api.llm_ops.manipulations import (
 )
 from src.api.llm_ops.write import router as writeRouter
 from src.clientmanager import clientManager
+from src.clientmanager.client import Client
 
 router = APIRouter(prefix="/{clientId}")
 
@@ -25,8 +26,8 @@ router.include_router(writeRouter)
 
 
 @router.get("/")
-async def hello(client=Depends(clientManager.get_client)):
+async def hello(client: Client = Depends(clientManager.get_client)):
     if not client:
-        return {"status": False, "message": "Invalid or expired client Id"}
+        return {"status": False, "error": "Invalid or expired client Id"}
 
-    return {"status": True, "message": f"Client '{client.clientId}' exists"}
+    return {"status": True, "message": f"Client '{client.clientId}' is online"}

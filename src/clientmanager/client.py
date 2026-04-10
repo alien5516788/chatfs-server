@@ -5,6 +5,7 @@ from typing import Literal
 
 from fastapi import WebSocket
 
+# TODO: Rename query_code base to query_workspace
 MessageType = Literal["connect_ack", "query_codebase"]
 replyTypes = {"code_context"}
 
