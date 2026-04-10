@@ -1,7 +1,6 @@
 import asyncio
 import json
 import os
-from copy import deepcopy
 from typing import Literal
 from uuid import uuid4
 
@@ -16,22 +15,24 @@ replyTypes = {"code_context"}
 # Instead create or remove them through the client manager
 class Client:
     __slots__ = (
-        "_sharedContext",
-        "_socket",
         "clientId",
+        "_socket",
+        "_shared_context",
+        "_shared_context_lock",
     )  # optimizes memory for methods
 
-    def __init__(self, socket: WebSocket, clientId: str):
-        self._sharedContext: dict[str, dict | None] = {}
-        self._socket: WebSocket = socket
+    def __init__(self, clientId: str, socket: WebSocket):
         self.clientId: str = clientId
+        self._socket: WebSocket = socket
+        self._shared_context: dict[str, asyncio.Future] = {}
+        self._shared_context_lock = asyncio.Lock()
 
     # Client is initialized through a class method
     # Becuase the initializing process is async
     @classmethod
-    async def __init_client__(cls, socket: WebSocket, clientId: str):
+    async def __init_client__(cls, clientId: str, socket: WebSocket):
         await socket.accept()
-        return cls(socket, clientId)
+        return cls(clientId, socket)
 
     # Messages to socket should be sent via handler methods (ex: send_ackknowledge)
     # No message crafting and manual message sending outside the client object should not be done
@@ -50,18 +51,19 @@ class Client:
     # Invoked by LLM endpoints
     # After sending a get codebase message, the handler should wait until the code context is recieved
     # Message get timedout if not recieved withing 2 seconds
-    async def __wait_for_context(self, message_id: str):
-        while self._sharedContext[message_id] is None:
-            await asyncio.sleep(0.01)
-
     async def send_query_codebase(
         self, command: str, queries: dict[str, int | float | str | bool]
     ) -> dict:
         # Message id
         message_id = str(uuid4())
 
-        # Add entry to shared contexts
-        self._sharedContext[message_id] = None
+        # Create a future varible to store shared context
+        loop = asyncio.get_running_loop()
+        future = loop.create_future()
+
+        # Add future entry to shared contexts
+        async with self._shared_context_lock:
+            self._shared_context[message_id] = future
 
         # Query codebase
         message_type: MessageType = "query_codebase"
@@ -77,23 +79,18 @@ class Client:
 
         # Wait for context
         try:
-            await asyncio.wait_for(self.__wait_for_context(message_id), timeout=4)
+            context = await asyncio.wait_for(future, timeout=4)
+
         except asyncio.TimeoutError:
-            self._sharedContext.pop(message_id)  # Clear entry
+            async with self._shared_context_lock:
+                self._shared_context.pop(message_id, None)
 
-            return {
-                "status": False,
-                "error": "Context wasn't sent by the client or timeout occured",
-            }
+            return {"status": False, "error": "Context wasn't sent or timeout occured"}
 
-        # Copy context and clear entry
-        shared_context = deepcopy(self._sharedContext[message_id])
-        self._sharedContext.pop(message_id)
+        async with self._shared_context_lock:
+            self._shared_context.pop(message_id, None)
 
-        return shared_context or {
-            "status": False,
-            "error": "Empty context",
-        }
+        return context
 
     # All recived messages should be passed to this method for validation
     # Each message is then passed to individual handler methods for further processing
@@ -116,7 +113,7 @@ class Client:
                 return
 
             if not isinstance(message_id, str):
-                print("Log: Reply format is not valid (field 'id' must be a string)")
+                print("Log: Reply format is not valid (field 'id' is not a string)")
                 return
 
             status = rply.get("status", None)
@@ -129,7 +126,7 @@ class Client:
 
             if not isinstance(status, bool):
                 print(
-                    "Log: Reply format is not valid (field 'status' must be a boolean)"
+                    "Log: Reply format is not valid (field 'status' is not a boolean)"
                 )
                 return
 
@@ -146,12 +143,16 @@ class Client:
                 return
 
             # Pass to handlers
-            if (
-                reply_type == "code_context"
-                and rply.get("context", None) is not None
-                and message_id in self._sharedContext
-            ):
-                self._sharedContext[message_id] = rply.get("context", None)
+            if reply_type == "code_context":
+                async with self._shared_context_lock:
+                    future = self._shared_context.pop(message_id, None)
+
+                if future is None:
+                    print(f"Log: Late response ignored ({message_id})")
+                    return
+
+                if not future.done():
+                    future.set_result(rply.get("context", None))
 
                 return
 

@@ -17,7 +17,7 @@ class ClientManager:
         clientId = str(uuid4()).replace("-", "")[
             :15
         ]  # First 15 chars of uuid excluding '-'
-        client = await Client.__init_client__(socket, clientId)
+        client = await Client.__init_client__(clientId, socket)
 
         async with self._clientListLock:
             self._connectedClients[clientId] = client
