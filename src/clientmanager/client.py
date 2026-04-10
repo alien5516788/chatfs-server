@@ -1,7 +1,9 @@
 import asyncio
 import json
 import os
+from copy import deepcopy
 from typing import Literal
+from uuid import uuid4
 
 from fastapi import WebSocket
 
@@ -20,7 +22,7 @@ class Client:
     )  # optimizes memory for methods
 
     def __init__(self, socket: WebSocket, clientId: str):
-        self._sharedContext: dict | None = None
+        self._sharedContext: dict[str, dict | None] = {}
         self._socket: WebSocket = socket
         self.clientId: str = clientId
 
@@ -48,19 +50,23 @@ class Client:
     # Invoked by LLM endpoints
     # After sending a get codebase message, the handler should wait until the code context is recieved
     # Message get timedout if not recieved withing 2 seconds
-    async def __wait_for_context(self):
-        while not self._sharedContext:
+    async def __wait_for_context(self, message_id: str):
+        while self._sharedContext[message_id] is None:
             await asyncio.sleep(0.01)
 
     async def send_query_codebase(
         self, command: str, queries: dict[str, int | float | str | bool]
     ) -> dict:
-        # Clean old shared contexts
-        self._sharedContext = None
+        # Message id
+        message_id = str(uuid4())
+
+        # Add entry to shared contexts
+        self._sharedContext[message_id] = None
 
         # Query codebase
         message_type: MessageType = "query_codebase"
         message = {
+            "id": message_id,
             "status": True,
             "message_type": message_type,
             "command": command,
@@ -71,16 +77,22 @@ class Client:
 
         # Wait for context
         try:
-            await asyncio.wait_for(self.__wait_for_context(), timeout=2)
+            await asyncio.wait_for(self.__wait_for_context(message_id), timeout=4)
         except asyncio.TimeoutError:
+            self._sharedContext.pop(message_id)  # Clear entry
+
             return {
                 "status": False,
-                "message": "Context wasn't sent by the client or timeout occured",
+                "error": "Context wasn't sent by the client or timeout occured",
             }
 
-        return self._sharedContext or {
+        # Copy context and clear entry
+        shared_context = deepcopy(self._sharedContext[message_id])
+        self._sharedContext.pop(message_id)
+
+        return shared_context or {
             "status": False,
-            "message": "Empty context",
+            "error": "Empty context",
         }
 
     # All recived messages should be passed to this method for validation
@@ -94,12 +106,22 @@ class Client:
 
         # Handle other messages
         try:
-            rply = json.loads(reply)
+            rply: dict = json.loads(reply)
 
             # Basic format validation
+            message_id = rply.get("id", None)
+
+            if not message_id:
+                print("Log: Reply format is not valid (required field 'id' not found)")
+                return
+
+            if not isinstance(message_id, str):
+                print("Log: Reply format is not valid (field 'id' must be a string)")
+                return
+
             status = rply.get("status", None)
 
-            if not status:
+            if status is None:
                 print(
                     "Log: Reply format is not valid (required field 'status' not found)"
                 )
@@ -124,8 +146,13 @@ class Client:
                 return
 
             # Pass to handlers
-            if reply_type == "code_context" and rply.get("context", None):
-                self._sharedContext = rply.get("context", None)
+            if (
+                reply_type == "code_context"
+                and rply.get("context", None) is not None
+                and message_id in self._sharedContext
+            ):
+                self._sharedContext[message_id] = rply.get("context", None)
+
                 return
 
         except Exception:
