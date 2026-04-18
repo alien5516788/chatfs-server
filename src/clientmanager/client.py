@@ -8,7 +8,7 @@ from fastapi import WebSocket
 
 # TODO: Rename query_code base to query_workspace
 MessageType = Literal["connect_ack", "query_codebase"]
-replyTypes = {"code_context"}
+replyTypes = {"message_error", "code_context"}
 
 
 # New clients should not be created or removed manually
@@ -68,9 +68,9 @@ class Client:
         # Query codebase
         message_type: MessageType = "query_codebase"
         message = {
-            "id": message_id,
             "status": True,
             "message_type": message_type,
+            "id": message_id,
             "command": command,
             "queries": queries,
         }
@@ -96,7 +96,7 @@ class Client:
     # Each message is then passed to individual handler methods for further processing
     # Handler methods are private and should not be used directly
     async def receive_reply(self, reply: str):
-        # Pong just resets the timeout and is only the message that is not JSON
+        # Pong just resets the timeout
         # Pong is sent as a response to a socket internel ping
         if reply == "pong":
             return
@@ -106,16 +106,6 @@ class Client:
             rply: dict = json.loads(reply)
 
             # Basic format validation
-            message_id = rply.get("id", None)
-
-            if not message_id:
-                print("Log: Reply format is not valid (required field 'id' not found)")
-                return
-
-            if not isinstance(message_id, str):
-                print("Log: Reply format is not valid (field 'id' is not a string)")
-                return
-
             status = rply.get("status", None)
 
             if status is None:
@@ -143,7 +133,24 @@ class Client:
                 return
 
             # Pass to handlers
+            if reply_type == "message_error":
+                print("Log: Client has recieved an invalid message")
+                return
+
             if reply_type == "code_context":
+                message_id = rply.get("id", None)
+
+                if not message_id:
+                    print(
+                        "Log: Reply format is not valid (required field 'id' not found)"
+                    )
+                    return
+
+                if not isinstance(message_id, str):
+                    print("Log: Reply format is not valid (field 'id' is not a string)")
+                    return
+
+                # Unwrap context
                 async with self._shared_context_lock:
                     future = self._shared_context.pop(message_id, None)
 
