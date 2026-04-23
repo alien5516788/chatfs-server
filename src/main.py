@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 
 from src.api.client import router as clientRouter
-from src.api.home import router as homeRouter
 from src.api.llm import router as llmRouter
 
 
@@ -24,6 +23,5 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # Assign routing groups
-app.include_router(homeRouter)
 app.include_router(clientRouter)
 app.include_router(llmRouter)
