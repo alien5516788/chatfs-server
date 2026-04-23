@@ -1,0 +1,50 @@
+from typing import Literal
+
+from pydantic import BaseModel
+
+
+# Message types
+# From gateway to client
+class ConnectSyn(BaseModel):
+    status: bool
+    message_type: Literal["connect_syn"]
+    gateway_url: str
+
+
+class Ping(BaseModel):
+    status: bool
+    message_type: Literal["ping"]
+
+
+class LLMCommand(BaseModel):
+    status: bool
+    message_type: Literal["llm_command"]
+    id: str
+    command: str
+    params: dict[str, str]
+
+
+# Reply types
+# From client to gateway
+class ConnectAck(BaseModel):
+    status: bool
+    message_type: Literal["connect_ack"]
+
+
+class Pong(BaseModel):
+    status: bool
+    reply_type: Literal["pong"]
+
+
+class LLMResult(BaseModel):
+    status: bool
+    reply_type: Literal["llm_result"]
+    id: str
+    result: dict
+
+
+# LLM response types
+# From gateway to LLM
+class LLMResponse(BaseModel):
+    status: bool
+    result: dict | str

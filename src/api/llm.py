@@ -1,33 +1,34 @@
-from fastapi import APIRouter, Depends
+import re
 
-from src.api.llm_ops.content import router as contentRouter
-from src.api.llm_ops.list import router as listRouter
-from src.api.llm_ops.manipulations import (
-    copyRouter,
-    createRouter,
-    deleteRouter,
-    moveRouter,
-    writelineRouter,
-)
-from src.api.llm_ops.write import router as writeRouter
-from src.clientmanager import clientManager
-from src.clientmanager.client import Client
+from fastapi import APIRouter, Depends, Request
+
+from src.socket import client_manager
+from src.socket.client import Client
+from src.types import LLMResponse
 
 router = APIRouter(prefix="/{clientId}")
 
-router.include_router(listRouter)
-router.include_router(contentRouter)
-router.include_router(createRouter)
-router.include_router(copyRouter)
-router.include_router(moveRouter)
-router.include_router(deleteRouter)
-router.include_router(writelineRouter)
-router.include_router(writeRouter)
-
 
 @router.get("/")
-async def hello(client: Client = Depends(clientManager.get_client)):
+async def llm(client: Client = Depends(client_manager.get_client)) -> LLMResponse:
     if not client:
-        return {"status": False, "error": "Invalid or expired client Id"}
+        return LLMResponse(status=False, result="Expired or invalid client ID")
 
-    return {"status": True, "message": f"Client '{client.clientId}' is online"}
+    return LLMResponse(status=True, result=f"Client '{client.client_id}' is online")
+
+
+@router.get("/{command}")
+async def command(
+    request: Request, command: str, client: Client = Depends(client_manager.get_client)
+) -> LLMResponse:
+    if not client:
+        return LLMResponse(status=False, result="Expired or invalid client ID")
+
+    if not re.match(r"^[a-z][a-z_]*$", command):
+        return LLMResponse(
+            status=False, result="Command must only consist of lowercase letters"
+        )
+
+    params = dict(request.query_params)
+
+    return await client.send_llm_command(command, params)

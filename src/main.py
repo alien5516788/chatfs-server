@@ -3,8 +3,8 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from fastapi import FastAPI
 
-from src.api.client import router as clientRouter
-from src.api.llm import router as llmRouter
+from src.api.client import router as client_router
+from src.api.llm import router as llm_router
 
 
 @asynccontextmanager
@@ -23,5 +23,5 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # Assign routing groups
-app.include_router(clientRouter)
-app.include_router(llmRouter)
+app.include_router(client_router)
+app.include_router(llm_router)
