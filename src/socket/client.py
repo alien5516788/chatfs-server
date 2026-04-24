@@ -101,6 +101,7 @@ class Client:
 
         try:
             await self._socket.send_text(json.dumps(message.model_dump()))
+
         except Exception:
             async with self._llm_results_lock:
                 self._llm_results.pop(message_id, None)

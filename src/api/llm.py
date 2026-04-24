@@ -6,7 +6,7 @@ from src.socket import client_manager
 from src.socket.client import Client
 from src.types import LlmResponse
 
-router = APIRouter(prefix="/{clientId}")
+router = APIRouter(prefix="/{client_id}")
 
 
 @router.get("/")
