@@ -9,9 +9,9 @@ from pydantic import ValidationError
 from src.types import (
     ConnectAck,
     ConnectSyn,
-    LLMCommand,
-    LLMResponse,
-    LLMResult,
+    LlmCommand,
+    LlmResponse,
+    LlmResult,
     Ping,
     Pong,
 )
@@ -78,7 +78,7 @@ class Client:
     # Reply is expected and returned
     async def send_llm_command(
         self, command: str, params: dict[str, str]
-    ) -> LLMResponse:
+    ) -> LlmResponse:
         # Message id
         message_id = str(uuid4())
 
@@ -91,7 +91,7 @@ class Client:
             self._llm_results[message_id] = future
 
         # Send message
-        message = LLMCommand(
+        message = LlmCommand(
             status=True,
             message_type="llm_command",
             id=message_id,
@@ -105,7 +105,7 @@ class Client:
             async with self._llm_results_lock:
                 self._llm_results.pop(message_id, None)
 
-            return LLMResponse(status=False, result="Failed to send command to client")
+            return LlmResponse(status=False, result="Failed to send command to client")
 
         # Wait for reply
         try:
@@ -117,7 +117,7 @@ class Client:
 
             future.cancel()
 
-            return LLMResponse(
+            return LlmResponse(
                 status=False, result="Reply wasn't recieved or timeout occured"
             )
 
@@ -143,7 +143,7 @@ class Client:
 
         # LLMResult
         try:
-            rply = LLMResult.model_validate_json(reply)
+            rply = LlmResult.model_validate_json(reply)
 
             async with self._llm_results_lock:
                 future = self._llm_results.pop(rply.id, None)
@@ -153,7 +153,7 @@ class Client:
                 return
 
             if not future.done():
-                reply_unwrapped = LLMResponse(status=rply.status, result=rply.result)
+                reply_unwrapped = LlmResponse(status=rply.status, result=rply.result)
                 future.set_result(reply_unwrapped)
 
         except ValidationError:

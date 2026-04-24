@@ -16,7 +16,7 @@ class Ping(BaseModel):
     message_type: Literal["ping"]
 
 
-class LLMCommand(BaseModel):
+class LlmCommand(BaseModel):
     status: bool
     message_type: Literal["llm_command"]
     id: str
@@ -28,7 +28,7 @@ class LLMCommand(BaseModel):
 # From client to gateway
 class ConnectAck(BaseModel):
     status: bool
-    message_type: Literal["connect_ack"]
+    reply_type: Literal["connect_ack"]
 
 
 class Pong(BaseModel):
@@ -36,7 +36,7 @@ class Pong(BaseModel):
     reply_type: Literal["pong"]
 
 
-class LLMResult(BaseModel):
+class LlmResult(BaseModel):
     status: bool
     reply_type: Literal["llm_result"]
     id: str
@@ -45,6 +45,6 @@ class LLMResult(BaseModel):
 
 # LLM response types
 # From gateway to LLM
-class LLMResponse(BaseModel):
+class LlmResponse(BaseModel):
     status: bool
     result: dict | str
