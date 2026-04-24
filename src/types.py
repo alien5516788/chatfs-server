@@ -40,7 +40,7 @@ class LlmResult(BaseModel):
     status: bool
     reply_type: Literal["llm_result"]
     id: str
-    result: dict
+    result: dict | str
 
 
 # LLM response types
