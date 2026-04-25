@@ -9,12 +9,13 @@ from src.types import LlmResponse
 router = APIRouter(prefix="/{client_id}")
 
 
+# Same as using command endpoint with the "prompt" command
 @router.get("/")
 async def llm(client: Client = Depends(client_manager.get_client)) -> LlmResponse:
     if not client:
         return LlmResponse(status=False, result="Expired or invalid client ID")
 
-    return LlmResponse(status=True, result=f"Client '{client.client_id}' is online")
+    return await client.send_llm_command("prompt", {})
 
 
 @router.get("/{command}")
