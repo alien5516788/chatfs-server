@@ -116,6 +116,56 @@ pdm run start
 
 ---
 
+## Gateway URL (Web Socket)
+
+The client connects to the server using a **WebSocket gateway URL**.
+
+This URL is created by:
+
+1. taking your server URL
+2. appending the client endpoint (`/client/`)
+3. converting the protocol from HTTP → WebSocket
+
+Examples,
+
+If the server URL is `http://your-server.com/`,
+
+```text
+http://your-server.com/client/
+```
+
+becomes:
+
+```text
+ws://your-server.com/client/
+```
+
+For HTTPS servers,
+
+```text
+https://your-server.com/client/
+```
+
+becomes:
+
+```text
+wss://your-server.com/client/
+```
+
+For local development servers,
+
+```text
+http://localhost:8000
+```
+
+becomes:
+
+```text
+ws://localhost:8000/client/
+```
+
+---
+
 ## Notes
 
 * This server does **not** enforce filesystem safety
