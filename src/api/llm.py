@@ -15,7 +15,7 @@ async def llm(client: Client = Depends(client_manager.get_client)) -> LlmRespons
     if not client:
         return LlmResponse(status=False, result="Expired or invalid client ID")
 
-    return await client.send_llm_command("prompt", {})
+    return LlmResponse(status=True, result=f"Client '{client.client_id}' is online")
 
 
 @router.get("/{command}")

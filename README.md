@@ -78,7 +78,17 @@ pdm install
 
 ---
 
-### 3. Run the server
+### 3. Add server URL to environment
+
+Create a `.env` file in the root directory with the following content or set the `SERVER_URL` environment variable using server settings.
+
+```bash
+SERVER_URL="<Server URL>" # e.g. "http://127.0.0.1:8000" or "https://<your-domain>"
+```
+
+---
+
+### 4. Run the server
 
 ```bash
 pdm run start
